@@ -1,0 +1,91 @@
+---
+title: "Simple Probabilistic Disease Model"
+output:
+  word_document: default
+  pdf_document: default
+  html_notebook: default
+---
+
+The topic of "exponential growth" has become a common word in this covid era, and I think it's an important concept to understand the spread of diseases, but disease spreading is not an entirely deterministic process. Exponential growth assumes that the number of people that a given infected person spreads the disease to is fixed (2, 3, etc.). 
+
+Here is a visual for the growth of various functions, you can see here how quickly something which grows exponentially can grow.
+
+```{r}
+#curve(exp(x), from = 0, to = 10)
+fun1<-function(x) exp(x)
+fun2<-function(x) x^2
+fun3<-function(x) x
+
+
+
+plot(fun1, 0, 6, col = 'Red', main = "Comparing Growth of Functions", ylab = "", xlab = "Time")
+legend("topleft", c("exp(x)","x^2", "x"), fill=c("red","green", "blue"))
+plot(fun2, 0, 6, add=TRUE, col = 'Green')
+plot(fun3, 0, 6, add=TRUE, col = 'Blue')
+```
+And if you look at larger time blocks it only becomes more clear:
+
+```{r}
+#curve(exp(x), from = 0, to = 10)
+fun1<-function(x) exp(x)
+fun2<-function(x) x^2
+fun3<-function(x) x
+
+
+
+plot(fun1, 0, 9, col = 'Red', main = "Comparing Growth of Functions", ylab = "", xlab = "Time")
+legend("topleft", c("exp(x)","x^2", "x"), fill=c("red","green", "blue"))
+plot(fun2, 0, 9, add=TRUE, col = 'Green')
+plot(fun3, 0, 9, add=TRUE, col = 'Blue')
+```
+
+But the spread of diseases is actually probabilitic, i.e. each person with the disease isn't going to spread it to some fixed number of people. Rather, a metric for quantifying how fast a disease might spread is the average number of people someone infected might spread it to. This is called "R naught" or R0.
+
+
+
+As per Healthline: 
+
+"R0, pronounced “R naught,” is a mathematical term that indicates how contagious an infectious disease is. It’s also referred to as the reproduction number. As an infection is transmitted to new people, it reproduces itself.
+
+R0 tells you the average number of people who will contract a contagious disease from one person with that disease. It specifically applies to a population of people who were previously free of infection and haven’t been vaccinated.
+
+For example, if a disease has an R0 of 18, a person who has the disease will transmit it to an average of 18 other people. That replication will continue if no one has been vaccinated against the disease or is already immune to it in their community."
+
+
+
+Let's see how these R0 values can effect disease spreading using a simple markov chain whose transition function is characterized by a multinomial distribution. This was implemented in the function "basic_corona_sim" :
+
+```{r}
+p <- basic_corona_sim(initial = 1, iterations = 10, p = c(.1, .2, .3, .4))
+plot(1:10, p, type = "b", main = "Probabilistic Growth", xlab = "Time", ylab = "")
+```
+
+In the above we have input that the initial number infected is 1, it is to iterate 10 times, and the probability mass function indicating how many people a given infected person spreads it to is:
+
+P(Spreads to 0 people) = 0.1
+P(Spreads to 1 person) = 0.2
+P(Spreads to 2 people) = 0.3
+P(Spreads to 3 people) = 0.4
+
+Or in other words, an R0 of 2. So with the average number of people any given infected person spreads the disease to being 2, we can already see quite a fast growth, mimicking that of the deterministic exponential growth.
+
+Lets now look at different R0 values:
+
+```{r}
+p1 <- basic_corona_sim(initial = 10, iterations = 50, p = c(.1, .9)) # R = 0.9
+p2 <- basic_corona_sim(initial = 10, iterations = 50, p = c(.5, 0, .5, 0)) # R = 1
+p3 <- basic_corona_sim(initial = 10, iterations = 20, p = c(.2, .5, .3)) # R = 1.1
+
+
+plot(1:50, p2, type = "b", main = "Diff R0", xlab = "Time", ylab = "", col = 'Blue')
+legend("topright", c("R0 = 0.9","R0 = 1", "R0 = 1.1"), fill=c("Green","Blue", "Orange"))
+#plot.window(c(0,50), c(0,20))
+lines(1:50, p1, type = "b", col = 'Green')
+lines(1:20, p3, type = "b", col = 'Orange')
+
+```
+
+Here you can see an interesting trend about the boundary point R0 = 1. If R0 is greater than 1, and a sufficiently large number of people start with the disease, it will grow on in a seemingly "exponential" way to infinity. If R0 is less than 1, then the disease will die out. At R0 = 1 it will also die out,  although this isn't entirely clear, its reminiscent of a symmetric random walk in which it will swing about its starting point, but with enough variance that eventually, with probability 1, it will reach 0 and will stay there.
+
+This is a simple model for how diseases spread, and clearly not a very accurate one, but is still a cool way to visualize how fast diseases can spread and how the exponential growth gets represented in a probilistic way.
+
